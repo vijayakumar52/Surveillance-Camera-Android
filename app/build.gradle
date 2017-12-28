@@ -8,6 +8,8 @@ android {
         applicationId "com.adsonik.surveillancecamera"
         minSdkVersion 21
         targetSdkVersion 26
+        versionCode = 24
+        versionName = "2.4.1"
 
         ndk {
             moduleName "detection_based_tracker"
