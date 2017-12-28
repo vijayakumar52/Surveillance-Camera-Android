@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Surveillance Camera</string>
+    <string name="ui_what_action_would_you_like">What to do when I find human while monitoring?</string>
+    <string name="ui_sound_alarm">Make Sound Alarm</string>
+    <string name="ui_save_screenshot">Save Screenshot</string>
+    <string name="ui_both">Both</string>
+    <string name="ui_start_monitoring">Start Monitoring</string>
+    <string name="ui_screenshot_folder">Screenshots will be saved in \n SD card/Surveillance Camera folder</string>
 </resources>

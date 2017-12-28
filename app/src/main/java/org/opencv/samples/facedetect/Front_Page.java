@@ -19,7 +19,7 @@ public class Front_Page extends Activity implements OnCheckedChangeListener {
     RadioGroup rg;
     String name;
     Button btn1;
-    TextView t1, t2, t3;
+    TextView t1, t3;
     RadioButton rb1, rb2, rb3;
 
     @Override
@@ -35,21 +35,14 @@ public class Front_Page extends Activity implements OnCheckedChangeListener {
                     setContentView(R.layout.front_page);
                     Typeface tf = Typeface.createFromAsset(Front_Page.this.getAssets(), "title.TTF");
                     t1 = (TextView) findViewById(R.id.textView1);
-                    t2 = (TextView) findViewById(R.id.textView2);
                     t3 = (TextView) findViewById(R.id.textView3);
 
-                    t1.setTypeface(tf);
-                    t2.setTypeface(tf);
-                    t3.setTypeface(tf);
 
                     rg = (RadioGroup) findViewById(R.id.radioGroup1);
                     rb1 = (RadioButton) findViewById(R.id.radio0);
                     rb2 = (RadioButton) findViewById(R.id.radio1);
                     rb3 = (RadioButton) findViewById(R.id.radio2);
 
-                    rb1.setTypeface(tf);
-                    rb2.setTypeface(tf);
-                    rb3.setTypeface(tf);
                     rg.setOnCheckedChangeListener(Front_Page.this);
                     btn1 = (Button) findViewById(R.id.button1);
                     btn1.setTypeface(tf);
