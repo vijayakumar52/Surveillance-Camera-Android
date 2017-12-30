@@ -1,0 +1,3 @@
+[submodule "OpenCV-Android"]
+	path = OpenCV-Android
+	url = https://github.com/vijayakumar52/OpenCV-Android.git
