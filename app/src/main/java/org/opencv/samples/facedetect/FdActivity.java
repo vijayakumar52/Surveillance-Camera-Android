@@ -19,6 +19,7 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
@@ -32,7 +33,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Calendar;
 
 public class FdActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -82,8 +82,7 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
                         byte[] buffer = new byte[4096];
                         int bytesRead;
 
-                        while ((bytesRead = is.read(buffer)) != -1)
-                        {
+                        while ((bytesRead = is.read(buffer)) != -1) {
                             os.write(buffer, 0, bytesRead);
                             Log.d(TAG, "buffer: " + buffer.toString());
                         }
@@ -190,9 +189,9 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
 
         MatOfRect faces = new MatOfRect();
 
-            if (cascadeClassifier != null)
-                cascadeClassifier.detectMultiScale(mGray, faces, 1.1, 2, 2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
-                        new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
+        if (cascadeClassifier != null)
+            cascadeClassifier.detectMultiScale(mGray, faces, 1.1, 2, 2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
+                    new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
 
 
         Rect[] facesArray = faces.toArray();
@@ -206,11 +205,11 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
             r.height = (int) Math.abs(r.height * 0.9);
 
 
-            Imgproc.putText(mRgba, " " + (i + 1), new Point((r.tl().x + r.br().x) / 2, (facesArray[i].tl().y + facesArray[i].br().y) / 2), 3, 1, new Scalar(255, 0, 0), 2);
+            Core.putText(mRgba, " " + (i + 1), new Point((r.tl().x + r.br().x) / 2, (facesArray[i].tl().y + facesArray[i].br().y) / 2), 3, 1, new Scalar(255, 0, 0), 2);
 
-            Imgproc.rectangle(mRgba, r.tl(), r.br(), FACE_RECT_COLOR, 3);
+            Core.rectangle(mRgba, r.tl(), r.br(), FACE_RECT_COLOR, 3);
         }
-        Imgproc.putText(mRgba, "No. of people: " + facesArray.length, new Point(40, 40), 3, 1, new Scalar(133, 200, 13), 2);
+        Core.putText(mRgba, "No. of people: " + facesArray.length, new Point(40, 40), 3, 1, new Scalar(133, 200, 13), 2);
 
         if (facesArray.length > 0) {
 

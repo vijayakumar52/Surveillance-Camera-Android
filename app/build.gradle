@@ -13,7 +13,6 @@ android {
 
         ndk {
             moduleName "detection_based_tracker"
-            abiFilters "armeabi", "armeabi-v7a", "x86", "mips"
         }
     }
 
@@ -23,15 +22,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
-    sourceSets {
-        main {
-            jni.srcDirs = []
-        }
-    }
 }
 
 dependencies {
     compile 'com.android.support:support-v4:26.1.0'
-    compile 'ch.zhaw:opencv:3.2.0'
+    compile project (':opencv')
     compile 'com.greysonparrelli.permiso:permiso:0.3.0'
 }
