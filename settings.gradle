@@ -1,2 +1,2 @@
-include ':app',':opencv'
+include ':app',':opencv',':Android-Utils'
 project(':opencv').projectDir = new File('OpenCV-Android/opencv')
