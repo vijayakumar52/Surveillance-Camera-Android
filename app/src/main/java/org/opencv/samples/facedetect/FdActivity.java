@@ -5,7 +5,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.os.Environment;
+import android.support.annotation.RawRes;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,7 +18,6 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
@@ -37,16 +36,15 @@ import java.util.Calendar;
 
 public class FdActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
     Bitmap bitmap;
-    MediaPlayer mp;
+    MediaPlayer mediaPlayer;
     String file_path;
     File dir;
     FileOutputStream fOut;
     Calendar c;
-    String id = null;
+    boolean makeAlarm = false;
     int fCount = 0;
     private static final String TAG = "OCVSample::Activity";
     private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
-    public static final int JAVA_DETECTOR = 0;
 
     private MenuItem mItemFace50;
     private MenuItem mItemFace40;
@@ -55,7 +53,6 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
 
     private Mat mRgba;
     private Mat mGray;
-    private File mCascadeFile;
     private CascadeClassifier cascadeClassifier;
 
     private float mRelativeFaceSize = 0.2f;
@@ -71,33 +68,13 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
 
-                    try {
-                        InputStream is = getResources().openRawResource(R.raw.hogcascade_pedestrians);
-                        File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
-                        mCascadeFile = new File(cascadeDir, "hogcascade_pedestrians.xml");
-                        FileOutputStream os = new FileOutputStream(mCascadeFile);
-
-
-                        byte[] buffer = new byte[4096];
-                        int bytesRead;
-
-                        while ((bytesRead = is.read(buffer)) != -1) {
-                            os.write(buffer, 0, bytesRead);
-                            Log.d(TAG, "buffer: " + buffer.toString());
-                        }
-                        is.close();
-                        os.close();
-// Load the cascade classifier
-                        cascadeClassifier = new CascadeClassifier(mCascadeFile.getAbsolutePath());
-                        cascadeClassifier.load(mCascadeFile.getAbsolutePath());
-                        if (cascadeClassifier.empty()) {
-                            Log.e(TAG, "Failed to load cascade classifier");
-                            cascadeClassifier = null;
-                        }
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
+                    File mCascadeFile = getRawResource(R.raw.hogcascade_pedestrians);
+                    // Load the cascade classifier
+                    cascadeClassifier = new CascadeClassifier(mCascadeFile.getAbsolutePath());
+                    cascadeClassifier.load(mCascadeFile.getAbsolutePath());
+                    if (cascadeClassifier.empty()) {
+                        Log.e(TAG, "Failed to load cascade classifier");
+                        cascadeClassifier = null;
                     }
 
                     mOpenCvCameraView.enableView();
@@ -110,6 +87,31 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
             }
         }
     };
+
+
+    private File getRawResource(@RawRes int id) {
+        File mCascadeFile = null;
+        try {
+            InputStream is = getResources().openRawResource(R.raw.hogcascade_pedestrians);
+            File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
+            mCascadeFile = new File(cascadeDir, "hogcascade_pedestrians.xml");
+            FileOutputStream os = new FileOutputStream(mCascadeFile);
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+
+            while ((bytesRead = is.read(buffer)) != -1) {
+                os.write(buffer, 0, bytesRead);
+                Log.d(TAG, "buffer: " + buffer.toString());
+            }
+            is.close();
+            os.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return mCascadeFile;
+    }
 
     public FdActivity() {
         Log.i(TAG, "Instantiated new " + this.getClass());
@@ -132,8 +134,8 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
 
         mOpenCvCameraView.setCvCameraViewListener(this);
 
-        mp = MediaPlayer.create(FdActivity.this, R.raw.tone1);
-        id = getIntent().getExtras().getString("radio");
+        mediaPlayer = MediaPlayer.create(FdActivity.this, R.raw.tone1);
+        makeAlarm = getIntent().getBooleanExtra(MainActivity.Companion.getMAKE_ALARM(), false);
 
         c = Calendar.getInstance();
 
@@ -210,11 +212,11 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
         }
         Core.putText(mRgba, "No. of people: " + facesArray.length, new Point(40, 40), 3, 1, new Scalar(133, 200, 13), 2);
 
-        if (facesArray.length > 0) {
+        /*if (facesArray.length > 0) {
 
             if (id.contentEquals("first")) {
-                if (!mp.isPlaying()) {
-                    mp.start();
+                if (!mediaPlayer.isPlaying()) {
+                    mediaPlayer.start();
                 }
             } else if (id.contentEquals("second")) {
                 bitmap = Bitmap.createBitmap(mOpenCvCameraView.getWidth() / 4, mOpenCvCameraView.getHeight() / 4, Bitmap.Config.ARGB_8888);
@@ -240,8 +242,8 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
                     System.out.println(ex.getMessage());
                 }
             } else if (id.contentEquals("third")) {
-                if (!mp.isPlaying()) {
-                    mp.start();
+                if (!mediaPlayer.isPlaying()) {
+                    mediaPlayer.start();
                 }
                 bitmap = Bitmap.createBitmap(mOpenCvCameraView.getWidth() / 4, mOpenCvCameraView.getHeight() / 4, Bitmap.Config.ARGB_8888);
                 try {
@@ -266,7 +268,7 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
                     System.out.println(ex.getMessage());
                 }
             }
-        }
+        }*/
 
         return mRgba;
 

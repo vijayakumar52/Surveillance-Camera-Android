@@ -7,5 +7,9 @@
     <string name="ui_both">Both</string>
     <string name="ui_start_monitoring">Start Monitoring</string>
     <string name="ui_screenshot_folder">Screenshots will be saved in \nSD card/Surveillance Camera folder</string>
-    <string name="toast_app_wont_work">App won\'t work without this permission!</string>
+    <string name="toast_app_wont_work">Whoops! App won\'t work without this permission!</string>
+    <string name="ui_make_alarm">Make Alarm</string>
+    <string name="ui_make_alarm_explanation">If enabled, the alarm will be blown whenever intruder detected.</string>
+    <string name="ui_choose_tone">Change Alarm Sound</string>
+    <string name="ui_intruder_history">Intruder History</string>
 </resources>
