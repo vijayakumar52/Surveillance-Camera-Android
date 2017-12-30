@@ -70,7 +70,6 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
-                    System.loadLibrary("detection_based_tracker");
 
                     try {
                         InputStream is = getResources().openRawResource(R.raw.hogcascade_pedestrians);
