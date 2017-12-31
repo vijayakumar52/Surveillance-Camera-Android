@@ -19,6 +19,13 @@ import java.util.List;
  */
 
 public class HistoryFragment extends Fragment {
+    int position;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        position = getArguments().getInt("position");
+    }
 
     @Nullable
     @Override
@@ -31,8 +38,7 @@ public class HistoryFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ViewPager pager = view.findViewById(R.id.historyViewPager);
-        new Loader(pager).execute();
-    }
+        new Loader(pager).execute();}
 
 
     class Loader extends AsyncTask<String, Integer, List<History>> {
@@ -54,6 +60,7 @@ public class HistoryFragment extends Fragment {
             MainActivity activity = (MainActivity) getActivity();
             HistoryViewPagerAdapter adapter = new HistoryViewPagerAdapter(getActivity(), result);
             this.viewPager.setAdapter(adapter);
+            this.viewPager.setCurrentItem(position);
         }
     }
 }

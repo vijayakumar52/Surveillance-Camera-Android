@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.adsonik.surveillancecamera.R;
+import com.jsibbold.zoomage.ZoomageView;
 import com.vijay.androidutils.BitmapCache;
 import com.vijay.androidutils.BitmapUtils;
 import com.vijay.androidutils.DisplayUtils;
@@ -25,7 +26,7 @@ import static org.opencv.samples.facedetect.HistoryRecyclerViewAdapter.getHistor
  * Created by vijay-3593 on 31/12/17.
  */
 
-public class HistoryViewPagerAdapter extends PagerAdapter {
+public class HistoryViewPagerAdapter extends PagerAdapter{
     Context context;
     List<History> historyList;
     private BitmapCache bitmapCache;
@@ -55,7 +56,7 @@ public class HistoryViewPagerAdapter extends PagerAdapter {
         relativeLayoutParams.addRule(Gravity.CENTER);
         relativeLayout.setBackgroundColor(context.getResources().getColor(R.color.md_grey_600));
         relativeLayout.getBackground().setAlpha(150);
-        ImageView imageView = new ImageView(context);
+        ZoomageView imageView = new ZoomageView(context);
 
         RelativeLayout.LayoutParams imageViewParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         int padding = (int) DisplayUtils.convertDpToPixel(16, context);
@@ -63,6 +64,11 @@ public class HistoryViewPagerAdapter extends PagerAdapter {
         imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         imageView.setImageBitmap(getImage(position));
         imageView.setLayoutParams(imageViewParams);
+
+        imageView.setAutoCenter(true);
+        imageView.setTranslatable(true);
+        imageView.setZoomable(true);
+
         relativeLayoutParams.addRule(RelativeLayout.CENTER_IN_PARENT);
         relativeLayout.addView(imageView);
         ((ViewPager) container).addView(relativeLayout, 0);

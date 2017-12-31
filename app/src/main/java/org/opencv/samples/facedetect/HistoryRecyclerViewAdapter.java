@@ -2,6 +2,7 @@ package org.opencv.samples.facedetect;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -105,6 +106,9 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
             FragmentTransaction ft = fm.beginTransaction();
             //ft.setCustomAnimations(R.anim.fade_in, R.anim.fade_out, R.anim.fade_in, R.anim.fade_out);
             Fragment fragment = new HistoryFragment();
+            Bundle bundle = new Bundle();
+            bundle.putInt("position", getAdapterPosition());
+            fragment.setArguments(bundle);
             ft.replace(android.R.id.content, fragment);
             ft.addToBackStack("historyView");
             ft.commit();
