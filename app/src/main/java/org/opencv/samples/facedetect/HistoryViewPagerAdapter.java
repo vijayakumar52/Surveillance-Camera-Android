@@ -54,8 +54,8 @@ public class HistoryViewPagerAdapter extends PagerAdapter{
         RelativeLayout relativeLayout = new RelativeLayout(context);
         RelativeLayout.LayoutParams relativeLayoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         relativeLayoutParams.addRule(Gravity.CENTER);
-        relativeLayout.setBackgroundColor(context.getResources().getColor(R.color.md_grey_600));
-        relativeLayout.getBackground().setAlpha(150);
+        relativeLayout.setBackgroundColor(context.getResources().getColor(R.color.md_black_1000));
+        relativeLayout.getBackground().setAlpha(200);
         ZoomageView imageView = new ZoomageView(context);
 
         RelativeLayout.LayoutParams imageViewParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);

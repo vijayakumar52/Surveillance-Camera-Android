@@ -158,21 +158,25 @@ class MainActivity : AppCompatActivity() {
             recyclerView.adapter = historyAdapter
 
             val emptyView = activity.findViewById<ProgressBar>(R.id.pvEmptyView);
-          /*  if(result.size == 0){
-                emptyView.visibility = View.VISIBLE;
-                recyclerView.visibility = View.GONE;
-            }else{
-                emptyView.visibility = View.GONE;
-                recyclerView.visibility = View.VISIBLE;
-            }*/
+            /*  if(result.size == 0){
+                  emptyView.visibility = View.VISIBLE;
+                  recyclerView.visibility = View.GONE;
+              }else{
+                  emptyView.visibility = View.GONE;
+                  recyclerView.visibility = View.VISIBLE;
+              }*/
         }
     }
 
-    class DeleteAllTask : AsyncTask<Object, Object,Object?>() {
-        override fun doInBackground(vararg params: Object?):Object? {
+    class DeleteAllTask : AsyncTask<Object, Object, Object?>() {
+        override fun doInBackground(vararg params: Object?): Object? {
             val activity = ActivityHolder.getInstance().activity as MainActivity
             val database = activity.getDatabase()
             database.historyDao.nukeTable()
+            val folderPath = File(HistoryRecyclerViewAdapter.getHistoryPath(activity));
+            if (folderPath.exists()) {
+                folderPath.delete()
+            }
             return null
         }
 
