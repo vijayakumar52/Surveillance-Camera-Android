@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,12 +36,8 @@ import java.util.Calendar;
 
 public class CameraActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
     MediaPlayer mediaPlayer;
-    String file_path;
-    File dir;
-    Calendar c;
     boolean makeAlarm = false;
-    int fCount = 0;
-    private static final String TAG = "OCVSample::Activity";
+    private static final String TAG = CameraActivity.class.getSimpleName();
     private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
 
     private MenuItem mItemFace50;
@@ -58,8 +55,10 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
     private int mAbsoluteFaceSize = 0;
 
     private CameraBridgeViewBase mOpenCvCameraView;
-
-
+    private Handler handler = new Handler();
+    private Runnable runnable;
+    Rect[] facesArray;
+    boolean timerCompleted = true;
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -160,7 +159,7 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
                     new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
 
 
-        Rect[] facesArray = faces.toArray();
+        facesArray = faces.toArray();
         for (int i = 0; i < facesArray.length; i++) {
 
             Rect r = facesArray[i];
@@ -176,8 +175,20 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
         }
         Core.putText(mRgba, "No. of people: " + facesArray.length, new Point(40, 40), 3, 1, new Scalar(133, 200, 13), 2);
 
-        if (facesArray.length > 0) {
-            new SaveTask(mRgba).execute();
+
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                timerCompleted = true;
+            }
+        };
+
+        if (timerCompleted) {
+            if (facesArray.length > 0) {
+                new SaveTask(mRgba).execute();
+            }
+            timerCompleted = false;
+            handler.postDelayed(runnable, 1000);
         }
 
         return mRgba;

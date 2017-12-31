@@ -98,9 +98,15 @@ class MainActivity : AppCompatActivity() {
             }, Manifest.permission.CAMERA)
         }
 
+        val tvClear = findViewById<TextView>(R.id.tvClear);
+        tvClear.setOnClickListener {
+            DeleteAllTask().execute()
+        }
+
         //Populate listview with history
         DBloader().execute()
     }
+
 
     fun validateAlarmText() {
 
@@ -148,9 +154,31 @@ class MainActivity : AppCompatActivity() {
             val gridLayoutManager = GridLayoutManager(activity, 3)
             val recyclerView = activity.findViewById<RecyclerView>(R.id.rvIntruderHistory)
             recyclerView.setLayoutManager(gridLayoutManager)
-
             val historyAdapter = HistoryRecyclerViewAdapter(ActivityHolder.getInstance().activity, result)
             recyclerView.adapter = historyAdapter
+
+            val emptyView = activity.findViewById<ProgressBar>(R.id.pvEmptyView);
+          /*  if(result.size == 0){
+                emptyView.visibility = View.VISIBLE;
+                recyclerView.visibility = View.GONE;
+            }else{
+                emptyView.visibility = View.GONE;
+                recyclerView.visibility = View.VISIBLE;
+            }*/
+        }
+    }
+
+    class DeleteAllTask : AsyncTask<Object, Object,Object?>() {
+        override fun doInBackground(vararg params: Object?):Object? {
+            val activity = ActivityHolder.getInstance().activity as MainActivity
+            val database = activity.getDatabase()
+            database.historyDao.nukeTable()
+            return null
+        }
+
+        override fun onPostExecute(result: Object?) {
+            super.onPostExecute(result)
+            DBloader().execute()
         }
     }
 
@@ -172,6 +200,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         Permiso.getInstance().setActivity(this)
+        DBloader().execute()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
