@@ -3,6 +3,7 @@ package org.opencv.samples.facedetect;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -11,12 +12,14 @@ import android.view.SurfaceView;
 import android.view.WindowManager;
 
 import com.adsonik.surveillancecamera.R;
+import com.vijay.androidutils.ActivityHolder;
 import com.vijay.androidutils.IOUtils;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
@@ -31,11 +34,9 @@ import java.io.FileOutputStream;
 import java.util.Calendar;
 
 public class CameraActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
-    Bitmap bitmap;
     MediaPlayer mediaPlayer;
     String file_path;
     File dir;
-    FileOutputStream fOut;
     Calendar c;
     boolean makeAlarm = false;
     int fCount = 0;
@@ -48,6 +49,7 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
     private MenuItem mItemFace20;
 
     private Mat mGray;
+    private Mat mRgba;
     MatOfRect faces;
 
     private CascadeClassifier cascadeClassifier;
@@ -65,7 +67,7 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
 
-                    File mCascadeFile = IOUtils.getFileFromRaw(CameraActivity.this, "hog.xml",R.raw.hogcascade_pedestrians);
+                    File mCascadeFile = IOUtils.getFileFromRaw(CameraActivity.this, "hog.xml", R.raw.hogcascade_pedestrians);
                     // Load the cascade classifier
                     cascadeClassifier = new CascadeClassifier(mCascadeFile.getAbsolutePath());
                     cascadeClassifier.load(mCascadeFile.getAbsolutePath());
@@ -133,15 +135,18 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
     public void onCameraViewStarted(int width, int height) {
         mGray = new Mat();
         faces = new MatOfRect();
+        mRgba = new Mat();
     }
 
     public void onCameraViewStopped() {
         mGray.release();
         faces.release();
+        mRgba.release();
     }
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+        mRgba = inputFrame.rgba();
         mGray = inputFrame.gray();
         if (mAbsoluteFaceSize == 0) {
             int height = mGray.rows();
@@ -165,73 +170,17 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
             r.height = (int) Math.abs(r.height * 0.9);
 
 
-            Core.putText(mGray, " " + (i + 1), new Point((r.tl().x + r.br().x) / 2, (facesArray[i].tl().y + facesArray[i].br().y) / 2), 3, 1, new Scalar(255, 0, 0), 2);
+            Core.putText(mRgba, " " + (i + 1), new Point((r.tl().x + r.br().x) / 2, (facesArray[i].tl().y + facesArray[i].br().y) / 2), 3, 1, new Scalar(255, 0, 0), 2);
 
-            Core.rectangle(mGray, r.tl(), r.br(), FACE_RECT_COLOR, 3);
+            Core.rectangle(mRgba, r.tl(), r.br(), FACE_RECT_COLOR, 3);
         }
-        Core.putText(mGray, "No. of people: " + facesArray.length, new Point(40, 40), 3, 1, new Scalar(133, 200, 13), 2);
+        Core.putText(mRgba, "No. of people: " + facesArray.length, new Point(40, 40), 3, 1, new Scalar(133, 200, 13), 2);
 
-        /*if (facesArray.length > 0) {
+        if (facesArray.length > 0) {
+            new SaveTask(mRgba).execute();
+        }
 
-            if (id.contentEquals("first")) {
-                if (!mediaPlayer.isPlaying()) {
-                    mediaPlayer.start();
-                }
-            } else if (id.contentEquals("second")) {
-                bitmap = Bitmap.createBitmap(mOpenCvCameraView.getWidth() / 4, mOpenCvCameraView.getHeight() / 4, Bitmap.Config.ARGB_8888);
-                try {
-                    bitmap = Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.ARGB_8888);
-                    Utils.matToBitmap(mRgba, bitmap);
-                    file_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Surveillance Camera";
-                    dir = new File(file_path);
-                    if (!dir.exists()) {
-                        dir.mkdirs();
-                    }
-                    int year_ = c.get(Calendar.YEAR);
-                    int date_ = c.get(Calendar.DATE);
-                    int minutes_ = c.get(Calendar.MINUTE);
-                    int seconds = c.get(Calendar.SECOND);
-                    File file = new File(dir, "screenshot" + "_" + year_ + "_" + date_ + "_" + minutes_ + "_" + String.valueOf(fCount++) + ".png");
-                    fOut = new FileOutputStream(file);
-
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 85, fOut);
-                    fOut.flush();
-                    fOut.close();
-                } catch (Exception ex) {
-                    System.out.println(ex.getMessage());
-                }
-            } else if (id.contentEquals("third")) {
-                if (!mediaPlayer.isPlaying()) {
-                    mediaPlayer.start();
-                }
-                bitmap = Bitmap.createBitmap(mOpenCvCameraView.getWidth() / 4, mOpenCvCameraView.getHeight() / 4, Bitmap.Config.ARGB_8888);
-                try {
-                    bitmap = Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.ARGB_8888);
-                    Utils.matToBitmap(mRgba, bitmap);
-                    file_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Surveillance Camera";
-                    dir = new File(file_path);
-                    if (!dir.exists()) {
-                        dir.mkdirs();
-                    }
-                    int year_ = c.get(Calendar.YEAR);
-                    int date_ = c.get(Calendar.DATE);
-                    int minutes_ = c.get(Calendar.MINUTE);
-                    int seconds = c.get(Calendar.SECOND);
-                    File file = new File(dir, "screenshot" + "_" + year_ + "_" + date_ + "_" + minutes_ + "_" + String.valueOf(fCount++) + ".png");
-                    fOut = new FileOutputStream(file);
-
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 85, fOut);
-                    fOut.flush();
-                    fOut.close();
-                } catch (Exception ex) {
-                    System.out.println(ex.getMessage());
-                }
-            }
-        }*/
-
-        return mGray;
-
-        //return inputFrame.rgba();
+        return mRgba;
     }
 
     @Override
@@ -261,5 +210,46 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
     private void setMinFaceSize(float faceSize) {
         mRelativeFaceSize = faceSize;
         mAbsoluteFaceSize = 0;
+    }
+
+    class SaveTask extends AsyncTask<String, Integer, String> {
+        Mat mRgba;
+
+        public SaveTask(Mat mRgba) {
+            this.mRgba = mRgba.clone();
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+            try {
+                Bitmap bitmap = Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(mRgba, bitmap);
+                String folderPath = HistoryRecyclerViewAdapter.getHistoryPath(CameraActivity.this);
+                long fileName = System.currentTimeMillis();
+
+                //Add in DB
+                MainActivity activity = (MainActivity) ActivityHolder.getInstance().getActivity();
+                History history = new History();
+                history.setCreatedTime(fileName);
+                activity.getDatabase().getHistoryDao().insert(history);
+
+                //Add in file store
+                File newFile = new File(folderPath + File.separator + fileName + ".jpeg");
+                FileOutputStream fOut = new FileOutputStream(newFile);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 85, fOut);
+                fOut.flush();
+                fOut.close();
+            } catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            this.mRgba.release();
+        }
     }
 }

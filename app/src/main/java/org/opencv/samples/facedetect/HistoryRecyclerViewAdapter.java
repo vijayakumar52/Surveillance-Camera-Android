@@ -1,9 +1,7 @@
 package org.opencv.samples.facedetect;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.adsonik.surveillancecamera.R;
-import com.vijay.androidutils.ActivityHolder;
+import com.vijay.androidutils.BitmapCache;
 import com.vijay.androidutils.BitmapUtils;
 import com.vijay.androidutils.DateUtils;
 
@@ -24,12 +22,14 @@ import java.util.List;
  */
 
 public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecyclerViewAdapter.HistoryViewHolder> {
-    Context context;
-    List<History> allDatas;
+    private Context context;
+    private List<History> allDatas;
+    private BitmapCache bitmapCache;
 
     public HistoryRecyclerViewAdapter(Context context, List<History> history) {
         this.context = context;
         this.allDatas = history;
+        this.bitmapCache = new BitmapCache();
     }
 
     @Override
@@ -48,19 +48,20 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
         return allDatas.get(position);
     }
 
+
     private Bitmap getImage(int position) {
         History item = getItem(position);
         long id = item.getCreatedTime();
-        File file = new File(getHistoryPath(context));
-        if (!file.exists()) {
-            file.mkdir();
+
+        Bitmap bitmap = bitmapCache.getBitmap(id + "");
+        if (bitmap == null) {
+            File imageFile = new File(getHistoryPath(context), id + ".jpeg");
+            if (imageFile.isFile()) {
+                bitmap = BitmapUtils.getDownScaledImage(imageFile.getPath(), 300, 300);
+                bitmapCache.putBitmap(id + "", bitmap);
+            }
         }
-        File imageFile = new File(file.getPath(), id + ".jpeg");
-        if (imageFile.isFile()) {
-            Bitmap image = BitmapUtils.getDownScaledImage(imageFile.getPath(), 100, 100);
-            return image;
-        }
-        return null;
+        return bitmap;
     }
 
     private String getTime(int position) {
@@ -68,16 +69,20 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
         return DateUtils.getRelativeTime(item.getCreatedTime());
     }
 
-    public String getHistoryPath(Context context) {
-        return context.getFilesDir().toString() + File.separator + MainActivity.Companion.getHISTORY();
+    public static String getHistoryPath(Context context) {
+        File file = new File(context.getFilesDir(), MainActivity.Companion.getHISTORY());
+        if (!file.exists()) {
+            file.mkdir();
+        }
+        return file.getPath();
     }
 
     @Override
     public int getItemCount() {
-        return 0;
+        return allDatas.size();
     }
 
-    class HistoryViewHolder extends RecyclerView.ViewHolder {
+    class HistoryViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         ImageView imageView;
         TextView textView;
 
@@ -85,6 +90,12 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
             super(itemView);
             imageView = itemView.findViewById(R.id.history_image);
             textView = itemView.findViewById(R.id.history_text);
+            itemView.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+
         }
     }
 }

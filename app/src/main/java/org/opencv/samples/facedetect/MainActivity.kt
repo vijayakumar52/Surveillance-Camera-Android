@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.widget.*
 import com.adsonik.surveillancecamera.R
@@ -18,7 +19,7 @@ import java.io.File
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var mediaPlayer: MediaPlayer;
+    private var mediaPlayer: MediaPlayer? = null;
     private lateinit var database: HistoryDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,31 +37,19 @@ class MainActivity : AppCompatActivity() {
             PrefUtils.setPrefValueBoolean(this@MainActivity, PREF_MAKE_ALARM, isChecked)
         }
 
+        validateAlarmText()
 
-        //Alarm tone text behaviour
-        val alarmToneUriPrefValue = PrefUtils.getPrefValueString(this, PREF_ALARM_TONE_URI)
-        if ("".equals(alarmToneUriPrefValue)) {
-            val newFile = File(filesDir, "Alarm default.mp3")
-            if (!newFile.exists()) {
-                newFile.createNewFile()
-            }
-            IOUtils.getFileFromRaw(this@MainActivity, newFile, R.raw.alarm)
-            PrefUtils.setPrefValueString(this, PREF_ALARM_TONE_URI, Uri.fromFile(newFile).toString())
-        }
+
         val alarmToneUriPrefValueUpdated = PrefUtils.getPrefValueString(this, PREF_ALARM_TONE_URI)
-        val tvAlarmTone = findViewById<TextView>(R.id.tvAlarmToneText)
-        tvAlarmTone.text = FileUtils.getFileName(alarmToneUriPrefValueUpdated)
-
-
-        mediaPlayer = MediaPlayer.create(this@MainActivity, Uri.parse(alarmToneUriPrefValueUpdated))
         val tvAlarmPlay = findViewById<ImageView>(R.id.tvAlarmTonePlay)
         tvAlarmPlay.setOnClickListener {
-            if (mediaPlayer.isPlaying) {
-                mediaPlayer.pause()
+            if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
+                mediaPlayer!!.pause()
                 tvAlarmPlay.setImageDrawable(resources.getDrawable(R.drawable.play))
             } else {
-                mediaPlayer.start()
-                mediaPlayer.setOnCompletionListener {
+                mediaPlayer = MediaPlayer.create(this@MainActivity, Uri.parse(alarmToneUriPrefValueUpdated))
+                mediaPlayer!!.start()
+                mediaPlayer!!.setOnCompletionListener {
                     tvAlarmPlay.setImageDrawable(resources.getDrawable(R.drawable.play))
                 }
                 tvAlarmPlay.setImageDrawable(resources.getDrawable(R.drawable.pause))
@@ -77,7 +66,6 @@ class MainActivity : AppCompatActivity() {
                         startActivityForResult(Intent.createChooser(intent, "Music File"), CHOOSE_TONE_CALLBACK)
                     } else {
                         Toast.makeText(this@MainActivity, R.string.toast_app_wont_work, Toast.LENGTH_SHORT).show()
-                        finish()
                     }
                 }
 
@@ -114,6 +102,23 @@ class MainActivity : AppCompatActivity() {
         DBloader().execute()
     }
 
+    fun validateAlarmText() {
+
+        //Alarm tone text behaviour
+        val alarmToneUriPrefValue = PrefUtils.getPrefValueString(this, PREF_ALARM_TONE_URI)
+        if ("".equals(alarmToneUriPrefValue)) {
+            val newFile = File(filesDir, "Alarm default.mp3")
+            if (!newFile.exists()) {
+                newFile.createNewFile()
+            }
+            IOUtils.getFileFromRaw(this@MainActivity, newFile, R.raw.alarm)
+            PrefUtils.setPrefValueString(this, PREF_ALARM_TONE_URI, Uri.fromFile(newFile).toString())
+        }
+        val alarmToneUriPrefValueUpdated = PrefUtils.getPrefValueString(this, PREF_ALARM_TONE_URI)
+        val tvAlarmTone = findViewById<TextView>(R.id.tvAlarmToneText)
+        tvAlarmTone.text = FileUtils.getFileName(alarmToneUriPrefValueUpdated)
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == CHOOSE_TONE_CALLBACK) {
@@ -122,22 +127,31 @@ class MainActivity : AppCompatActivity() {
                 if (file != null) {
                     val fileUri = Uri.fromFile(file)
                     PrefUtils.setPrefValueString(this@MainActivity, PREF_ALARM_TONE_URI, fileUri.toString())
+                    validateAlarmText()
                 }
             }
         }
     }
 
-    class DBloader : AsyncTask<Object, Object, Object?>() {
-        override fun doInBackground(vararg params: Object?): Object? {
-            val recyclerView = ActivityHolder.getInstance().activity.findViewById<RecyclerView>(R.id.rvIntruderHistory)
+    class DBloader : AsyncTask<Object, Object, List<History>>() {
+        override fun doInBackground(vararg params: Object?): List<History> {
             val activity = ActivityHolder.getInstance().activity as MainActivity
             val database = activity.getDatabase()
             val allDatas = database.historyDao.all
-            val historyAdapter = HistoryRecyclerViewAdapter(ActivityHolder.getInstance().activity, allDatas);
-            recyclerView.adapter = historyAdapter;
-            return null
+            return allDatas
         }
 
+        override fun onPostExecute(result: List<History>) {
+            super.onPostExecute(result)
+
+            val activity = ActivityHolder.getInstance().activity as MainActivity;
+            val gridLayoutManager = GridLayoutManager(activity, 3)
+            val recyclerView = activity.findViewById<RecyclerView>(R.id.rvIntruderHistory)
+            recyclerView.setLayoutManager(gridLayoutManager)
+
+            val historyAdapter = HistoryRecyclerViewAdapter(ActivityHolder.getInstance().activity, result)
+            recyclerView.adapter = historyAdapter
+        }
     }
 
     fun getDatabase(): HistoryDatabase {
