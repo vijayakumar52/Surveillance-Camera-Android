@@ -7,12 +7,12 @@
     android:padding="8dp">
 
     <LinearLayout
+        android:id="@+id/alarmLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/md_grey_100"
-        android:padding="8dp"
-        android:id="@+id/alarmLayout"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -28,9 +28,9 @@
                 android:textStyle="bold" />
 
             <CheckBox
+                android:id="@+id/cbMakeAlarm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/cbMakeAlarm"
                 android:layout_gravity="right"
                 android:padding="8dp" />
         </LinearLayout>
@@ -41,39 +41,74 @@
             android:padding="8dp"
             android:text="@string/ui_make_alarm_explanation" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:textColor="@color/md_blue_700"
-            android:textAllCaps="true"
-            android:padding="8dp"
-            android:textStyle="bold"
-            android:text="@string/ui_choose_tone"/>
+            android:layout_gravity="center"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/ui_tone"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:id="@+id/tvAlarmToneText"
+                android:text="@string/ui_tone_name" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="4dp"
+                android:id="@+id/tvAlarmTonePlay"
+                android:src="@drawable/play" />
+
+            <RelativeLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/tvChangeAlarm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:padding="4dp"
+                    android:text="@string/ui_choose_tone"
+                    android:textAllCaps="true"
+                    android:textColor="@color/md_blue_700"
+                    android:textStyle="bold" />
+            </RelativeLayout>
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/intruderLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
         android:layout_marginTop="8dp"
+        android:layout_weight="1"
         android:background="@color/md_grey_100"
-        android:id="@+id/intruderLayout"
         android:orientation="vertical"
         android:padding="8dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
             android:padding="8dp"
-            android:text="@string/ui_intruder_history"/>
+            android:text="@string/ui_intruder_history"
+            android:textStyle="bold" />
 
         <android.support.v7.widget.RecyclerView
-            android:layout_width="match_parent"
-            android:padding="8dp"
             android:id="@+id/rvIntruderHistory"
-            android:layout_height="wrap_content"/>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp" />
 
     </LinearLayout>
 
@@ -81,9 +116,9 @@
         android:id="@+id/btnStartMonitoring"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:gravity="center"
         android:layout_gravity="center"
+        android:gravity="center"
+        android:padding="8dp"
         android:text="@string/ui_start_monitoring"
         android:textSize="18sp" />
 </LinearLayout>

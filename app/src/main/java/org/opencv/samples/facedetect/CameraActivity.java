@@ -1,11 +1,9 @@
 package org.opencv.samples.facedetect;
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.support.annotation.RawRes;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,6 +11,7 @@ import android.view.SurfaceView;
 import android.view.WindowManager;
 
 import com.adsonik.surveillancecamera.R;
+import com.vijay.androidutils.IOUtils;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -25,16 +24,13 @@ import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Calendar;
 
-public class FdActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
+public class CameraActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
     Bitmap bitmap;
     MediaPlayer mediaPlayer;
     String file_path;
@@ -51,8 +47,9 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
     private MenuItem mItemFace30;
     private MenuItem mItemFace20;
 
-    private Mat mRgba;
     private Mat mGray;
+    MatOfRect faces;
+
     private CascadeClassifier cascadeClassifier;
 
     private float mRelativeFaceSize = 0.2f;
@@ -68,7 +65,7 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
 
-                    File mCascadeFile = getRawResource(R.raw.hogcascade_pedestrians);
+                    File mCascadeFile = IOUtils.getFileFromRaw(CameraActivity.this, "hog.xml",R.raw.hogcascade_pedestrians);
                     // Load the cascade classifier
                     cascadeClassifier = new CascadeClassifier(mCascadeFile.getAbsolutePath());
                     cascadeClassifier.load(mCascadeFile.getAbsolutePath());
@@ -88,58 +85,25 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
         }
     };
 
-
-    private File getRawResource(@RawRes int id) {
-        File mCascadeFile = null;
-        try {
-            InputStream is = getResources().openRawResource(R.raw.hogcascade_pedestrians);
-            File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
-            mCascadeFile = new File(cascadeDir, "hogcascade_pedestrians.xml");
-            FileOutputStream os = new FileOutputStream(mCascadeFile);
-
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-
-            while ((bytesRead = is.read(buffer)) != -1) {
-                os.write(buffer, 0, bytesRead);
-                Log.d(TAG, "buffer: " + buffer.toString());
-            }
-            is.close();
-            os.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return mCascadeFile;
-    }
-
-    public FdActivity() {
-        Log.i(TAG, "Instantiated new " + this.getClass());
-    }
-
-    /**
-     * Called when the activity is first created.
-     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "called onCreate");
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        makeAlarm = getIntent().getBooleanExtra(MainActivity.Companion.getINTENT_EXTRA_MAKE_ALARM(), false);
+        String toneUri = getIntent().getStringExtra(MainActivity.Companion.getINTENT_EXTRA_ALARM_URI());
 
         setContentView(R.layout.face_detect_surface_view);
 
-
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.tutorial1_activity_java_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
-
         mOpenCvCameraView.setCvCameraViewListener(this);
 
-        mediaPlayer = MediaPlayer.create(FdActivity.this, R.raw.tone1);
-        makeAlarm = getIntent().getBooleanExtra(MainActivity.Companion.getMAKE_ALARM(), false);
-
-        c = Calendar.getInstance();
-
+        if (!"".equals(toneUri)) {
+            mediaPlayer = MediaPlayer.create(CameraActivity.this, R.raw.alarm);
+        }
     }
+
 
     @Override
     public void onPause() {
@@ -168,27 +132,23 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
 
     public void onCameraViewStarted(int width, int height) {
         mGray = new Mat();
-        mRgba = new Mat();
+        faces = new MatOfRect();
     }
 
     public void onCameraViewStopped() {
         mGray.release();
-        mRgba.release();
+        faces.release();
     }
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        mRgba = inputFrame.rgba();
-        Imgproc.cvtColor(mRgba, mGray, Imgproc.COLOR_RGBA2GRAY);
-
+        mGray = inputFrame.gray();
         if (mAbsoluteFaceSize == 0) {
             int height = mGray.rows();
             if (Math.round(height * mRelativeFaceSize) > 0) {
                 mAbsoluteFaceSize = Math.round(height * mRelativeFaceSize);
             }
         }
-
-        MatOfRect faces = new MatOfRect();
 
         if (cascadeClassifier != null)
             cascadeClassifier.detectMultiScale(mGray, faces, 1.1, 2, 2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
@@ -198,7 +158,6 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
         Rect[] facesArray = faces.toArray();
         for (int i = 0; i < facesArray.length; i++) {
 
-
             Rect r = facesArray[i];
             r.x += Math.abs(r.width * 0.1);
             r.width = (int) Math.abs(r.width * 0.8);
@@ -206,11 +165,11 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
             r.height = (int) Math.abs(r.height * 0.9);
 
 
-            Core.putText(mRgba, " " + (i + 1), new Point((r.tl().x + r.br().x) / 2, (facesArray[i].tl().y + facesArray[i].br().y) / 2), 3, 1, new Scalar(255, 0, 0), 2);
+            Core.putText(mGray, " " + (i + 1), new Point((r.tl().x + r.br().x) / 2, (facesArray[i].tl().y + facesArray[i].br().y) / 2), 3, 1, new Scalar(255, 0, 0), 2);
 
-            Core.rectangle(mRgba, r.tl(), r.br(), FACE_RECT_COLOR, 3);
+            Core.rectangle(mGray, r.tl(), r.br(), FACE_RECT_COLOR, 3);
         }
-        Core.putText(mRgba, "No. of people: " + facesArray.length, new Point(40, 40), 3, 1, new Scalar(133, 200, 13), 2);
+        Core.putText(mGray, "No. of people: " + facesArray.length, new Point(40, 40), 3, 1, new Scalar(133, 200, 13), 2);
 
         /*if (facesArray.length > 0) {
 
@@ -270,7 +229,7 @@ public class FdActivity extends Activity implements CameraBridgeViewBase.CvCamer
             }
         }*/
 
-        return mRgba;
+        return mGray;
 
         //return inputFrame.rgba();
     }

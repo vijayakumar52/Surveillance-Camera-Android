@@ -10,6 +10,8 @@
     <string name="toast_app_wont_work">Whoops! App won\'t work without this permission!</string>
     <string name="ui_make_alarm">Make Alarm</string>
     <string name="ui_make_alarm_explanation">If enabled, the alarm will be blown whenever intruder detected.</string>
-    <string name="ui_choose_tone">Change Alarm Sound</string>
+    <string name="ui_choose_tone">Change</string>
     <string name="ui_intruder_history">Intruder History</string>
+    <string name="ui_tone">Alarm tone : </string>
+    <string name="ui_tone_name">Default.mp3</string>
 </resources>

@@ -2,9 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.adsonik.surveillancecamera">
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
-
 
     <application
         android:icon="@drawable/icon"
@@ -12,7 +11,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name="org.opencv.samples.facedetect.FdActivity"
+            android:name="org.opencv.samples.facedetect.CameraActivity"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:configChanges="keyboardHidden|orientation"
             android:screenOrientation="landscape"
@@ -29,8 +28,6 @@
         </activity>
 
     </application>
-
-    <uses-permission android:name="android.permission.CAMERA" />
 
     <uses-feature
         android:name="android.hardware.camera"
