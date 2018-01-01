@@ -41,13 +41,13 @@ class MainActivity : AppCompatActivity() {
         validateAlarmText()
 
 
-        val alarmToneUriPrefValueUpdated = PrefUtils.getPrefValueString(this, PREF_ALARM_TONE_URI)
         val tvAlarmPlay = findViewById<ImageView>(R.id.tvAlarmTonePlay)
         tvAlarmPlay.setOnClickListener {
             if (mediaPlayer != null && mediaPlayer!!.isPlaying) {
                 mediaPlayer!!.pause()
                 tvAlarmPlay.setImageDrawable(resources.getDrawable(R.drawable.play))
             } else {
+                val alarmToneUriPrefValueUpdated = PrefUtils.getPrefValueString(this, PREF_ALARM_TONE_URI)
                 mediaPlayer = MediaPlayer.create(this@MainActivity, Uri.parse(alarmToneUriPrefValueUpdated))
                 mediaPlayer!!.start()
                 mediaPlayer!!.setOnCompletionListener {
@@ -103,30 +103,32 @@ class MainActivity : AppCompatActivity() {
         tvClear.setOnClickListener {
             viewModel.deleteAllItems()
         }
-
+        val gridLayoutManager = GridLayoutManager(this, 3)
+        val recyclerView = findViewById<RecyclerView>(R.id.rvIntruderHistory)
+        recyclerView.layoutManager = gridLayoutManager
 
         viewModel.allItems.observe(this, Observer { histories ->
-
-            val activity = ActivityHolder.getInstance().activity as MainActivity;
-            val gridLayoutManager = GridLayoutManager(activity, 3)
-            val recyclerView = activity.findViewById<RecyclerView>(R.id.rvIntruderHistory)
-            recyclerView.setLayoutManager(gridLayoutManager)
-            val historyAdapter = HistoryRecyclerViewAdapter(this@MainActivity, histories)
-            recyclerView.adapter = historyAdapter
+            if(recyclerView.adapter == null) {
+                val historyAdapter = HistoryRecyclerViewAdapter(this@MainActivity, histories)
+                recyclerView.adapter = historyAdapter
+            }else{
+                val historyAdapter = recyclerView.adapter as HistoryRecyclerViewAdapter
+                historyAdapter.notifyDataChanged(histories)
+            }
 
         })
     }
 
-   /* fun isPagerShowing(): Boolean {
-        val manager = supportFragmentManager
-        val backStackCount = manager.backStackEntryCount
-        if (backStackCount > 0) {
-            if ("pagerFragment".equals(manager.getBackStackEntryAt(0).name)) {
-                return true
-            }
-        }
-        return false;
-    }*/
+    /* fun isPagerShowing(): Boolean {
+         val manager = supportFragmentManager
+         val backStackCount = manager.backStackEntryCount
+         if (backStackCount > 0) {
+             if ("pagerFragment".equals(manager.getBackStackEntryAt(0).name)) {
+                 return true
+             }
+         }
+         return false;
+     }*/
 
     fun getViewModel(): HistoryListViewModel {
         return viewModel;
@@ -147,6 +149,7 @@ class MainActivity : AppCompatActivity() {
         val alarmToneUriPrefValueUpdated = PrefUtils.getPrefValueString(this, PREF_ALARM_TONE_URI)
         val tvAlarmTone = findViewById<TextView>(R.id.tvAlarmToneText)
         tvAlarmTone.text = FileUtils.getFileName(alarmToneUriPrefValueUpdated)
+        tvAlarmTone.layoutParams.width = DisplayUtils.getScreenWidthinPx(this) / 4
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -3,6 +3,7 @@ package org.opencv.samples.facedetect;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -59,6 +60,7 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
     private Runnable runnable;
     Rect[] facesArray;
     boolean timerCompleted = true;
+    String toneUri;
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -92,17 +94,13 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         makeAlarm = getIntent().getBooleanExtra(MainActivity.Companion.getINTENT_EXTRA_MAKE_ALARM(), false);
-        String toneUri = getIntent().getStringExtra(MainActivity.Companion.getINTENT_EXTRA_ALARM_URI());
+        toneUri = getIntent().getStringExtra(MainActivity.Companion.getINTENT_EXTRA_ALARM_URI());
 
         setContentView(R.layout.face_detect_surface_view);
 
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.tutorial1_activity_java_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
-
-        if (!"".equals(toneUri)) {
-            mediaPlayer = MediaPlayer.create(CameraActivity.this, R.raw.alarm);
-        }
     }
 
 
@@ -135,12 +133,20 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
         mGray = new Mat();
         faces = new MatOfRect();
         mRgba = new Mat();
+        if (!"".equals(toneUri)) {
+            mediaPlayer = MediaPlayer.create(CameraActivity.this, Uri.parse(toneUri));
+        }
     }
 
     public void onCameraViewStopped() {
         mGray.release();
         faces.release();
         mRgba.release();
+        if(mediaPlayer != null){
+            if(mediaPlayer.isPlaying()){
+                mediaPlayer.pause();
+            }
+        }
     }
 
     @Override
@@ -186,6 +192,9 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
         if (timerCompleted) {
             if (facesArray.length > 0) {
                 new SaveTask(mRgba).execute();
+                if(makeAlarm){
+                    mediaPlayer.start();
+                }
             }
             timerCompleted = false;
             handler.postDelayed(runnable, 1000);

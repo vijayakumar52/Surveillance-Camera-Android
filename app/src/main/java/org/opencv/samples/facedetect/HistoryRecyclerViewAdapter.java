@@ -87,6 +87,10 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
         return file.getPath();
     }
 
+    public void notifyDataChanged(List<History> newData){
+        this.allDatas = newData;
+        notifyDataSetChanged();
+    }
     @Override
     public int getItemCount() {
         return allDatas.size();
