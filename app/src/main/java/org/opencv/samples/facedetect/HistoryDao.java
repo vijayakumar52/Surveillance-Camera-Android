@@ -1,5 +1,6 @@
 package org.opencv.samples.facedetect;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
@@ -16,7 +17,7 @@ import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 @Dao
 public interface HistoryDao {
     @Query("SELECT * FROM history")
-    List<History> getAll();
+    LiveData<List<History>> getAll();
 
     @Insert(onConflict = REPLACE)
     void insert(History history);

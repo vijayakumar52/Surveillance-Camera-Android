@@ -2,11 +2,11 @@ package org.opencv.samples.facedetect
 
 import android.Manifest
 import android.app.Activity
-import android.arch.persistence.room.Room
+import android.arch.lifecycle.Observer
+import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.media.MediaPlayer
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.GridLayoutManager
@@ -20,14 +20,15 @@ import java.io.File
 
 class MainActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null;
-    private lateinit var database: HistoryDatabase
+    private lateinit var viewModel: HistoryListViewModel;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ActivityHolder.getInstance().activity = this
         Permiso.getInstance().setActivity(this)
-        database = Room.databaseBuilder(this, HistoryDatabase::class.java, DATABASE_NAME).build()
         setContentView(R.layout.activity_main)
+
+        viewModel = ViewModelProviders.of(this).get(HistoryListViewModel::class.java);
 
         //Checkbox behaviour
         val alarmPrefValue: Boolean = PrefUtils.getPrefValueBoolean(this, PREF_MAKE_ALARM)
@@ -100,13 +101,36 @@ class MainActivity : AppCompatActivity() {
 
         val tvClear = findViewById<TextView>(R.id.tvClear);
         tvClear.setOnClickListener {
-            DeleteAllTask().execute()
+            viewModel.deleteAllItems()
         }
 
-        //Populate listview with history
-        DBloader().execute()
+
+        viewModel.allItems.observe(this, Observer { histories ->
+
+            val activity = ActivityHolder.getInstance().activity as MainActivity;
+            val gridLayoutManager = GridLayoutManager(activity, 3)
+            val recyclerView = activity.findViewById<RecyclerView>(R.id.rvIntruderHistory)
+            recyclerView.setLayoutManager(gridLayoutManager)
+            val historyAdapter = HistoryRecyclerViewAdapter(this@MainActivity, histories)
+            recyclerView.adapter = historyAdapter
+
+        })
     }
 
+   /* fun isPagerShowing(): Boolean {
+        val manager = supportFragmentManager
+        val backStackCount = manager.backStackEntryCount
+        if (backStackCount > 0) {
+            if ("pagerFragment".equals(manager.getBackStackEntryAt(0).name)) {
+                return true
+            }
+        }
+        return false;
+    }*/
+
+    fun getViewModel(): HistoryListViewModel {
+        return viewModel;
+    }
 
     fun validateAlarmText() {
 
@@ -139,57 +163,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    class DBloader : AsyncTask<Object, Object, List<History>>() {
-        override fun doInBackground(vararg params: Object?): List<History> {
-            val activity = ActivityHolder.getInstance().activity as MainActivity
-            val database = activity.getDatabase()
-            val allDatas = database.historyDao.all
-            return allDatas
-        }
-
-        override fun onPostExecute(result: List<History>) {
-            super.onPostExecute(result)
-
-            val activity = ActivityHolder.getInstance().activity as MainActivity;
-            val gridLayoutManager = GridLayoutManager(activity, 3)
-            val recyclerView = activity.findViewById<RecyclerView>(R.id.rvIntruderHistory)
-            recyclerView.setLayoutManager(gridLayoutManager)
-            val historyAdapter = HistoryRecyclerViewAdapter(ActivityHolder.getInstance().activity, result)
-            recyclerView.adapter = historyAdapter
-
-            val emptyView = activity.findViewById<ProgressBar>(R.id.pvEmptyView);
-            /*  if(result.size == 0){
-                  emptyView.visibility = View.VISIBLE;
-                  recyclerView.visibility = View.GONE;
-              }else{
-                  emptyView.visibility = View.GONE;
-                  recyclerView.visibility = View.VISIBLE;
-              }*/
-        }
-    }
-
-    class DeleteAllTask : AsyncTask<Object, Object, Object?>() {
-        override fun doInBackground(vararg params: Object?): Object? {
-            val activity = ActivityHolder.getInstance().activity as MainActivity
-            val database = activity.getDatabase()
-            database.historyDao.nukeTable()
-            val folderPath = File(HistoryRecyclerViewAdapter.getHistoryPath(activity));
-            if (folderPath.exists()) {
-                folderPath.delete()
-            }
-            return null
-        }
-
-        override fun onPostExecute(result: Object?) {
-            super.onPostExecute(result)
-            DBloader().execute()
-        }
-    }
-
-    fun getDatabase(): HistoryDatabase {
-        return database
-    }
-
     companion object {
         val PREF_MAKE_ALARM: String = "makeAlarm"
         val PREF_ALARM_TONE_URI = "alarmToneUri"
@@ -204,7 +177,6 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         Permiso.getInstance().setActivity(this)
-        DBloader().execute()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {

@@ -242,7 +242,7 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
                 MainActivity activity = (MainActivity) ActivityHolder.getInstance().getActivity();
                 History history = new History();
                 history.setCreatedTime(fileName);
-                activity.getDatabase().getHistoryDao().insert(history);
+                activity.getViewModel().addItem(history);
 
                 //Add in file store
                 File newFile = new File(folderPath + File.separator + fileName + ".jpeg");

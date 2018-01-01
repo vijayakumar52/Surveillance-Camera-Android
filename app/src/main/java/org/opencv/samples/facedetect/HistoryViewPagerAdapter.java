@@ -26,7 +26,7 @@ import static org.opencv.samples.facedetect.HistoryRecyclerViewAdapter.getHistor
  * Created by vijay-3593 on 31/12/17.
  */
 
-public class HistoryViewPagerAdapter extends PagerAdapter{
+public class HistoryViewPagerAdapter extends PagerAdapter {
     Context context;
     List<History> historyList;
     private BitmapCache bitmapCache;
