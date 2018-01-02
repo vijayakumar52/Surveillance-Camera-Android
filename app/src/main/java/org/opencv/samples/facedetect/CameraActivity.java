@@ -9,12 +9,17 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.adsonik.surveillancecamera.R;
 import com.vijay.androidutils.ActivityHolder;
 import com.vijay.androidutils.IOUtils;
 import com.vijay.androidutils.Logger;
+import com.vijay.androidutils.PrefUtils;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -61,6 +66,8 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
     Rect[] peopleSize;
     boolean timerCompleted = true;
     String toneUri;
+    TextView countView;
+    private String PREF_CLOSE = "closeBtnState";
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -120,6 +127,24 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
         toneUri = getIntent().getStringExtra(MainActivity.Companion.getINTENT_EXTRA_ALARM_URI());
 
         setContentView(R.layout.face_detect_surface_view);
+        countView = findViewById(R.id.people_count);
+
+        RelativeLayout closeLayout = findViewById(R.id.closeLayout);
+        boolean closeStatus = PrefUtils.getPrefValueBoolean(this, PREF_CLOSE);
+        if(!closeStatus){
+            closeLayout.setVisibility(View.VISIBLE);
+            ImageView closeBtn = findViewById(R.id.closeBtn);
+            closeBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    PrefUtils.setPrefValueBoolean(CameraActivity.this, PREF_CLOSE, true);
+                    RelativeLayout closeLayout = findViewById(R.id.closeLayout);
+                    closeLayout.setVisibility(View.GONE);
+                }
+            });
+        }else{
+            closeLayout.setVisibility(View.GONE);
+        }
 
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.tutorial1_activity_java_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -211,12 +236,12 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
                             new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
                 }
 
-                peopleSize = peoples.toArray();
+               /* peopleSize = peoples.toArray();
                 if (peopleSize.length == 0) {
                     Logger.d(TAG, "Detecting full body with cascade not found.");
                     Logger.d(TAG, "Detecting full body with HOG...");
                     hogDescriptor.detectMultiScale(mGray, peoples, mMargins, 0, new Size(8, 8), new Size(32, 32), 1.05, 2, false);
-                }
+                }*/
             }
         }
 
@@ -244,7 +269,7 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
         return mRgba;
     }
 
-    private void drawPoeples(Mat mRgba, Rect[] peopleArray) {
+    private void drawPoeples(Mat mRgba, final Rect[] peopleArray) {
         for (int i = 0; i < peopleArray.length; i++) {
 
             Rect r = peopleArray[i];
@@ -258,7 +283,14 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
 
             Core.rectangle(mRgba, r.tl(), r.br(), FACE_RECT_COLOR, 3);
         }
-        Core.putText(mRgba, "No. of people: " + peopleArray.length, new Point(20, 20), 3, 1, new Scalar(133, 200, 13), 2);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                countView.setText(getResources().getString(R.string.ui_no_of_people) + " " + peopleArray.length);
+            }
+        });
+
+        //Core.putText(mRgba, "No. of people: " + peopleArray.length, new Point(20, 20), 3, 1, new Scalar(133, 200, 13), 2);
     }
 
     class SaveTask extends AsyncTask<String, Integer, String> {

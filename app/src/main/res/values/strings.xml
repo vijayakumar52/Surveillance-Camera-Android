@@ -19,4 +19,6 @@
     <string name="dialog_content_delete">Are you sure you want to delete this photo</string>
     <string name="dialot_ok">Ok</string>
     <string name="dialog_cancel">Cancel</string>
+    <string name="ui_no_of_people">No of People :</string>
+    <string name="ui_use_camera_in_landscape">Please use camera in landscape mode</string>
 </resources>
