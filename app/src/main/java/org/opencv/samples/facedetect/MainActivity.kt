@@ -143,7 +143,7 @@ class MainActivity : AppCompatActivity() {
             if (!newFile.exists()) {
                 newFile.createNewFile()
             }
-            IOUtils.getFileFromRaw(this@MainActivity, newFile, R.raw.alarm)
+            IOUtils.getFileFromRaw(this@MainActivity, newFile, R.raw.intruder_alarm)
             PrefUtils.setPrefValueString(this, PREF_ALARM_TONE_URI, Uri.fromFile(newFile).toString())
         }
         val alarmToneUriPrefValueUpdated = PrefUtils.getPrefValueString(this, PREF_ALARM_TONE_URI)

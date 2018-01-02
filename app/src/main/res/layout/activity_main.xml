@@ -176,6 +176,8 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:padding="8dp"
+        android:background="@drawable/rounded_rect"
+        android:textColor="@color/md_white_1000"
         android:text="@string/ui_start_monitoring"
         android:textSize="16sp" />
 </LinearLayout>
