@@ -131,7 +131,7 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
 
         RelativeLayout closeLayout = findViewById(R.id.closeLayout);
         boolean closeStatus = PrefUtils.getPrefValueBoolean(this, PREF_CLOSE);
-        if(!closeStatus){
+        if (!closeStatus) {
             closeLayout.setVisibility(View.VISIBLE);
             ImageView closeBtn = findViewById(R.id.closeBtn);
             closeBtn.setOnClickListener(new View.OnClickListener() {
@@ -142,7 +142,7 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
                     closeLayout.setVisibility(View.GONE);
                 }
             });
-        }else{
+        } else {
             closeLayout.setVisibility(View.GONE);
         }
 
@@ -259,7 +259,24 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
             if (peopleSize.length > 0) {
                 new SaveTask(mRgba).execute();
                 if (makeAlarm) {
-                    mediaPlayer.start();
+                    if (!mediaPlayer.isPlaying()) {
+                        mediaPlayer.start();
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                new Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                                            mediaPlayer.pause();
+                                        }
+                                    }
+                                }, 10000);
+                            }
+                        });
+
+                    }
                 }
             }
             timerCompleted = false;
