@@ -134,7 +134,7 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
                 public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                     if (which == DialogAction.POSITIVE) {
                         History currentItem = getItem(getAdapterPosition());
-                        activity.getViewModel().deleteItem(currentItem);
+                        activity.getViewModel().deleteItem(activity, currentItem);
                     }
                 }
             }, null);

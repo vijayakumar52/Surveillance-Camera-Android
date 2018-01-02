@@ -3,8 +3,12 @@ package org.opencv.samples.facedetect;
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
+import android.content.Context;
 import android.os.AsyncTask;
 
+import com.vijay.androidutils.FileUtils;
+
+import java.io.File;
 import java.util.List;
 
 public class HistoryListViewModel extends AndroidViewModel {
@@ -22,7 +26,10 @@ public class HistoryListViewModel extends AndroidViewModel {
         return allItems;
     }
 
-    public void deleteItem(History borrowModel) {
+    public void deleteItem(Context context, History borrowModel) {
+        File file = new File(HistoryRecyclerViewAdapter.getHistoryPath(context), borrowModel.getCreatedTime() + ".jpeg");
+        FileUtils.deleteFile(file.getPath());
+
         new deleteTask(appDatabase).execute(borrowModel);
     }
 
@@ -30,7 +37,9 @@ public class HistoryListViewModel extends AndroidViewModel {
         new InsertTask(appDatabase).execute(history);
     }
 
-    public void deleteAllItems() {
+    public void deleteAllItems(Context context) {
+        File file = new File(HistoryRecyclerViewAdapter.getHistoryPath(context));
+        FileUtils.deleteFile(file.getPath());
         new deleteAllTask(appDatabase).execute();
     }
 

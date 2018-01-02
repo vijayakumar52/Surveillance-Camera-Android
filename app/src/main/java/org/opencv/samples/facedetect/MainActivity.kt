@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
                 override fun onPermissionResult(resultSet: Permiso.ResultSet) {
                     if (resultSet.areAllPermissionsGranted()) {
                         val intent = Intent(Intent.ACTION_GET_CONTENT)
-                        intent.type = "audio/mp3"
+                        intent.type = "audio/*"
                         startActivityForResult(Intent.createChooser(intent, "Music File"), CHOOSE_TONE_CALLBACK)
                     } else {
                         Toast.makeText(this@MainActivity, R.string.toast_app_wont_work, Toast.LENGTH_SHORT).show()
@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
 
         val tvClear = findViewById<TextView>(R.id.tvClear);
         tvClear.setOnClickListener {
-            viewModel.deleteAllItems()
+            viewModel.deleteAllItems(this)
         }
         val gridLayoutManager = GridLayoutManager(this, 3)
         val recyclerView = findViewById<RecyclerView>(R.id.rvIntruderHistory)
@@ -148,8 +148,7 @@ class MainActivity : AppCompatActivity() {
         }
         val alarmToneUriPrefValueUpdated = PrefUtils.getPrefValueString(this, PREF_ALARM_TONE_URI)
         val tvAlarmTone = findViewById<TextView>(R.id.tvAlarmToneText)
-        tvAlarmTone.text = FileUtils.getFileName(alarmToneUriPrefValueUpdated)
-        tvAlarmTone.layoutParams.width = DisplayUtils.getScreenWidthinPx(this) / 4
+        tvAlarmTone.text = FileUtils.getFileName(Uri.parse(alarmToneUriPrefValueUpdated).path)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

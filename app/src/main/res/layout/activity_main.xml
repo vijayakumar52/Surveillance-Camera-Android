@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/md_white_1000"
+    android:background="@color/md_grey_200"
     android:orientation="vertical"
     android:padding="8dp">
 
@@ -10,21 +10,22 @@
         android:id="@+id/alarmLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/md_grey_100"
+        android:background="@color/md_white_1000"
         android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:gravity="center"
             android:padding="8dp">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="16sp"
                 android:text="@string/ui_make_alarm"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <CheckBox
@@ -37,52 +38,64 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:textSize="14sp"
-            android:text="@string/ui_make_alarm_explanation" />
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp"
+            android:textStyle="italic"
+            android:text="@string/ui_make_alarm_explanation"
+            android:textSize="14sp" />
+
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
+            android:orientation="horizontal"
             android:padding="8dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="2dp"
+                android:layout_marginRight="2dp"
                 android:text="@string/ui_tone"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
+            <TableLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:layout_weight="1"
-                android:orientation="horizontal">
+                android:shrinkColumns="0">
 
-                <TextView
-                    android:id="@+id/tvAlarmToneText"
-                    android:layout_width="wrap_content"
+                <TableRow
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="4dp"
-                    android:layout_marginRight="4dp"
-                    android:layout_gravity="center"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:textStyle="italic"
-                    android:textSize="14sp"
-                    android:text="@string/ui_tone_name" />
+                    android:layout_gravity="center">
 
-                <ImageView
-                    android:id="@+id/tvAlarmTonePlay"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/play" />
-            </LinearLayout>
+                    <TextView
+                        android:id="@+id/tvAlarmToneText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:padding="4dp"
+                        android:text="@string/ui_tone_name"
+                        android:textSize="14sp"
+                        android:textStyle="italic" />
 
+                    <ImageView
+                        android:id="@+id/tvAlarmTonePlay"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:padding="4dp"
+                        android:src="@drawable/play" />
+
+                </TableRow>
+            </TableLayout>
 
             <TextView
                 android:id="@+id/tvChangeAlarm"
@@ -93,6 +106,7 @@
                 android:textAllCaps="true"
                 android:textColor="@color/md_blue_700"
                 android:textSize="16sp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
@@ -103,7 +117,7 @@
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
         android:layout_weight="1"
-        android:background="@color/md_grey_100"
+        android:background="@color/md_grey_200"
         android:orientation="vertical">
 
         <LinearLayout
@@ -114,8 +128,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
                 android:text="@string/ui_intruder_history"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <RelativeLayout
@@ -130,9 +144,10 @@
                     android:layout_alignParentRight="true"
                     android:padding="4dp"
                     android:text="@string/ui_clear"
-                    android:textSize="16sp"
                     android:textAllCaps="true"
                     android:textColor="@color/md_blue_700"
+                    android:textSize="16sp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:textStyle="bold" />
             </RelativeLayout>
         </LinearLayout>
