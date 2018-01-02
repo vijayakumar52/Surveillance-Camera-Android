@@ -8,14 +8,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 
 import com.adsonik.surveillancecamera.R;
 import com.vijay.androidutils.ActivityHolder;
 import com.vijay.androidutils.IOUtils;
+import com.vijay.androidutils.Logger;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -24,16 +23,17 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.objdetect.CascadeClassifier;
+import org.opencv.objdetect.HOGDescriptor;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Calendar;
 
 public class CameraActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2 {
     MediaPlayer mediaPlayer;
@@ -41,16 +41,16 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
     private static final String TAG = CameraActivity.class.getSimpleName();
     private static final Scalar FACE_RECT_COLOR = new Scalar(0, 255, 0, 255);
 
-    private MenuItem mItemFace50;
-    private MenuItem mItemFace40;
-    private MenuItem mItemFace30;
-    private MenuItem mItemFace20;
-
     private Mat mGray;
     private Mat mRgba;
-    MatOfRect faces;
 
-    private CascadeClassifier cascadeClassifier;
+    private MatOfRect peoples;
+    private MatOfDouble mMargins;
+
+    private CascadeClassifier faceClassifier;
+    private CascadeClassifier upperBodyClassifier;
+    private CascadeClassifier fullBodyClassifier;
+    private HOGDescriptor hogDescriptor;
 
     private float mRelativeFaceSize = 0.2f;
     private int mAbsoluteFaceSize = 0;
@@ -58,7 +58,7 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
     private CameraBridgeViewBase mOpenCvCameraView;
     private Handler handler = new Handler();
     private Runnable runnable;
-    Rect[] facesArray;
+    Rect[] peopleSize;
     boolean timerCompleted = true;
     String toneUri;
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -68,14 +68,37 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
 
-                    File mCascadeFile = IOUtils.getFileFromRaw(CameraActivity.this, "hog.xml", R.raw.hogcascade_pedestrians);
-                    // Load the cascade classifier
-                    cascadeClassifier = new CascadeClassifier(mCascadeFile.getAbsolutePath());
-                    cascadeClassifier.load(mCascadeFile.getAbsolutePath());
-                    if (cascadeClassifier.empty()) {
-                        Log.e(TAG, "Failed to load cascade classifier");
-                        cascadeClassifier = null;
+                    //Initializing face cascade classifier
+                    File faceFile = IOUtils.getFileFromRaw(CameraActivity.this, "faceClassifier.xml", R.raw.lbpcascade_frontalface);
+                    faceClassifier = new CascadeClassifier(faceFile.getAbsolutePath());
+                    faceClassifier.load(faceFile.getAbsolutePath());
+                    if (faceClassifier.empty()) {
+                        Log.e(TAG, "Failed to load face classifier");
+                        faceClassifier = null;
                     }
+
+                    //Initializing upper body cascade classifier
+                    File upperBody = IOUtils.getFileFromRaw(CameraActivity.this, "upperBody.xml", R.raw.haarcascade_upperbody);
+                    upperBodyClassifier = new CascadeClassifier(upperBody.getAbsolutePath());
+                    upperBodyClassifier.load(upperBody.getAbsolutePath());
+                    if (upperBodyClassifier.empty()) {
+                        Log.e(TAG, "Failed to load upperbody classifier");
+                        upperBodyClassifier = null;
+                    }
+
+
+                    //Initializing full body cascade classifier
+                    File fullBody = IOUtils.getFileFromRaw(CameraActivity.this, "fullBody.xml", R.raw.hogcascade_pedestrians);
+                    fullBodyClassifier = new CascadeClassifier(fullBody.getAbsolutePath());
+                    fullBodyClassifier.load(fullBody.getAbsolutePath());
+                    if (fullBodyClassifier.empty()) {
+                        Log.e(TAG, "Failed to load fullbody classifier");
+                        fullBodyClassifier = null;
+                    }
+
+                    //Initializing HOG Descriptor
+                    hogDescriptor = new HOGDescriptor();
+                    hogDescriptor.setSVMDetector(HOGDescriptor.getDefaultPeopleDetector());
 
                     mOpenCvCameraView.enableView();
                 }
@@ -100,6 +123,7 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
 
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.tutorial1_activity_java_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
+        mOpenCvCameraView.setMaxFrameSize(640, 480);
         mOpenCvCameraView.setCvCameraViewListener(this);
     }
 
@@ -131,7 +155,8 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
 
     public void onCameraViewStarted(int width, int height) {
         mGray = new Mat();
-        faces = new MatOfRect();
+        peoples = new MatOfRect();
+        mMargins = new MatOfDouble();
         mRgba = new Mat();
         if (!"".equals(toneUri)) {
             mediaPlayer = MediaPlayer.create(CameraActivity.this, Uri.parse(toneUri));
@@ -140,10 +165,11 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
 
     public void onCameraViewStopped() {
         mGray.release();
-        faces.release();
+        peoples.release();
         mRgba.release();
-        if(mediaPlayer != null){
-            if(mediaPlayer.isPlaying()){
+        mMargins.release();
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
                 mediaPlayer.pause();
             }
         }
@@ -153,6 +179,8 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         mRgba = inputFrame.rgba();
         mGray = inputFrame.gray();
+
+        //Detecting faces;
         if (mAbsoluteFaceSize == 0) {
             int height = mGray.rows();
             if (Math.round(height * mRelativeFaceSize) > 0) {
@@ -160,27 +188,40 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
             }
         }
 
-        if (cascadeClassifier != null)
-            cascadeClassifier.detectMultiScale(mGray, faces, 1.1, 2, 2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
+        Logger.d(TAG, "Detecting face...");
+        if (faceClassifier != null) {
+            faceClassifier.detectMultiScale(mGray, peoples, 1.1, 2, 2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
                     new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
-
-
-        facesArray = faces.toArray();
-        for (int i = 0; i < facesArray.length; i++) {
-
-            Rect r = facesArray[i];
-            r.x += Math.abs(r.width * 0.1);
-            r.width = (int) Math.abs(r.width * 0.8);
-            r.y += Math.abs(r.height * 0.06);
-            r.height = (int) Math.abs(r.height * 0.9);
-
-
-            Core.putText(mRgba, " " + (i + 1), new Point((r.tl().x + r.br().x) / 2, (facesArray[i].tl().y + facesArray[i].br().y) / 2), 3, 1, new Scalar(255, 0, 0), 2);
-
-            Core.rectangle(mRgba, r.tl(), r.br(), FACE_RECT_COLOR, 3);
         }
-        Core.putText(mRgba, "No. of people: " + facesArray.length, new Point(40, 40), 3, 1, new Scalar(133, 200, 13), 2);
+        peopleSize = peoples.toArray();
+        if (peopleSize.length == 0) {
+            Logger.d(TAG, "Face not found.");
+            Logger.d(TAG, "Detecting upper body...");
+            if (upperBodyClassifier != null) {
+                upperBodyClassifier.detectMultiScale(mGray, peoples, 1.1, 2, 2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
+                        new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
+            }
 
+            peopleSize = peoples.toArray();
+            if (peopleSize.length == 0) {
+                Logger.d(TAG, "Upper body not found.");
+                Logger.d(TAG, "Detecting full body with cascade...");
+                if (fullBodyClassifier != null) {
+                    fullBodyClassifier.detectMultiScale(mGray, peoples, 1.1, 2, 2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
+                            new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
+                }
+
+                peopleSize = peoples.toArray();
+                if (peopleSize.length == 0) {
+                    Logger.d(TAG, "Detecting full body with cascade not found.");
+                    Logger.d(TAG, "Detecting full body with HOG...");
+                    hogDescriptor.detectMultiScale(mGray, peoples, mMargins, 0, new Size(8, 8), new Size(32, 32), 1.05, 2, false);
+                }
+            }
+        }
+
+
+        drawPoeples(mRgba, peopleSize);
 
         runnable = new Runnable() {
             @Override
@@ -190,9 +231,9 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
         };
 
         if (timerCompleted) {
-            if (facesArray.length > 0) {
+            if (peopleSize.length > 0) {
                 new SaveTask(mRgba).execute();
-                if(makeAlarm){
+                if (makeAlarm) {
                     mediaPlayer.start();
                 }
             }
@@ -203,33 +244,21 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
         return mRgba;
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        Log.i(TAG, "called onCreateOptionsMenu");
-        mItemFace50 = menu.add("Human size 50%");
-        mItemFace40 = menu.add("Human size 40%");
-        mItemFace30 = menu.add("Human size 30%");
-        mItemFace20 = menu.add("Human size 20%");
-        return super.onCreateOptionsMenu(menu);
-    }
+    private void drawPoeples(Mat mRgba, Rect[] peopleArray) {
+        for (int i = 0; i < peopleArray.length; i++) {
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        Log.i(TAG, "called onOptionsItemSelected; selected item: " + item);
-        if (item == mItemFace50)
-            setMinFaceSize(0.5f);
-        else if (item == mItemFace40)
-            setMinFaceSize(0.4f);
-        else if (item == mItemFace30)
-            setMinFaceSize(0.3f);
-        else if (item == mItemFace20)
-            setMinFaceSize(0.2f);
-        return super.onOptionsItemSelected(item);
-    }
+            Rect r = peopleArray[i];
+            r.x += Math.abs(r.width * 0.1);
+            r.width = (int) Math.abs(r.width * 0.8);
+            r.y += Math.abs(r.height * 0.06);
+            r.height = (int) Math.abs(r.height * 0.9);
 
-    private void setMinFaceSize(float faceSize) {
-        mRelativeFaceSize = faceSize;
-        mAbsoluteFaceSize = 0;
+
+            Core.putText(mRgba, " " + (i + 1), new Point((r.tl().x + r.br().x) / 2, (peopleArray[i].tl().y + peopleArray[i].br().y) / 2), 3, 1, new Scalar(255, 0, 0), 2);
+
+            Core.rectangle(mRgba, r.tl(), r.br(), FACE_RECT_COLOR, 3);
+        }
+        Core.putText(mRgba, "No. of people: " + peopleArray.length, new Point(20, 20), 3, 1, new Scalar(133, 200, 13), 2);
     }
 
     class SaveTask extends AsyncTask<String, Integer, String> {
