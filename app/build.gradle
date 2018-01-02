@@ -9,8 +9,8 @@ android {
         applicationId "com.adsonik.surveillancecamera"
         minSdkVersion 16
         targetSdkVersion 26
-        versionCode = 25
-        versionName = "2.3.0"
+        versionCode = 50
+        versionName = "3.0.0"
     }
 
     buildTypes {
@@ -25,14 +25,14 @@ android {
         abi {
             enable true
             reset()
-            include "armeabi", "armeabi-v7a", "mips", "x86"
+            include "mips", "armeabi", "armeabi-v7a", "x86"
             universalApk true
         }
     }
 }
 
 
-ext.abiCodes = ['armeabi':1, 'armeabi-v7a':2, 'mips':3, 'x86':4]
+ext.abiCodes = ['mips':1, 'armeabi':2, 'armeabi-v7a':3, 'x86':4]
 
 import com.android.build.OutputFile
 
