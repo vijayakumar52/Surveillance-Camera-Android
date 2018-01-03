@@ -26,7 +26,6 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfRect;
@@ -34,6 +33,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.objdetect.HOGDescriptor;
 
@@ -54,7 +54,6 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
 
     private CascadeClassifier faceClassifier;
     private CascadeClassifier upperBodyClassifier;
-    private CascadeClassifier fullBodyClassifier;
     private HOGDescriptor hogDescriptor;
 
     private float mRelativeFaceSize = 0.2f;
@@ -91,16 +90,6 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
                     if (upperBodyClassifier.empty()) {
                         Log.e(TAG, "Failed to load upperbody classifier");
                         upperBodyClassifier = null;
-                    }
-
-
-                    //Initializing full body cascade classifier
-                    File fullBody = IOUtils.getFileFromRaw(CameraActivity.this, "fullBody.xml", R.raw.hogcascade_pedestrians);
-                    fullBodyClassifier = new CascadeClassifier(fullBody.getAbsolutePath());
-                    fullBodyClassifier.load(fullBody.getAbsolutePath());
-                    if (fullBodyClassifier.empty()) {
-                        Log.e(TAG, "Failed to load fullbody classifier");
-                        fullBodyClassifier = null;
                     }
 
                     //Initializing HOG Descriptor
@@ -230,18 +219,8 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
             peopleSize = peoples.toArray();
             if (peopleSize.length == 0) {
                 Logger.d(TAG, "Upper body not found.");
-                Logger.d(TAG, "Detecting full body with cascade...");
-                if (fullBodyClassifier != null) {
-                    fullBodyClassifier.detectMultiScale(mGray, peoples, 1.1, 2, 2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
-                            new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
-                }
-
-               /* peopleSize = peoples.toArray();
-                if (peopleSize.length == 0) {
-                    Logger.d(TAG, "Detecting full body with cascade not found.");
-                    Logger.d(TAG, "Detecting full body with HOG...");
-                    hogDescriptor.detectMultiScale(mGray, peoples, mMargins, 0, new Size(8, 8), new Size(32, 32), 1.05, 2, false);
-                }*/
+                Logger.d(TAG, "Detecting full body with HOG...");
+                hogDescriptor.detectMultiScale(mGray, peoples, mMargins, 0, new Size(8, 8), new Size(32, 32), 1.05, 2, false);
             }
         }
 
@@ -296,9 +275,9 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
             r.height = (int) Math.abs(r.height * 0.9);
 
 
-            Core.putText(mRgba, " " + (i + 1), new Point((r.tl().x + r.br().x) / 2, (peopleArray[i].tl().y + peopleArray[i].br().y) / 2), 3, 1, new Scalar(255, 0, 0), 2);
+            Imgproc.putText(mRgba, " " + (i + 1), new Point((r.tl().x + r.br().x) / 2, (peopleArray[i].tl().y + peopleArray[i].br().y) / 2), 3, 1, new Scalar(255, 0, 0), 2);
 
-            Core.rectangle(mRgba, r.tl(), r.br(), FACE_RECT_COLOR, 3);
+            Imgproc.rectangle(mRgba, r.tl(), r.br(), FACE_RECT_COLOR, 3);
         }
         runOnUiThread(new Runnable() {
             @Override
@@ -306,8 +285,6 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
                 countView.setText(getResources().getString(R.string.ui_no_of_people) + " " + peopleArray.length);
             }
         });
-
-        //Core.putText(mRgba, "No. of people: " + peopleArray.length, new Point(20, 20), 3, 1, new Scalar(133, 200, 13), 2);
     }
 
     class SaveTask extends AsyncTask<String, Integer, String> {
